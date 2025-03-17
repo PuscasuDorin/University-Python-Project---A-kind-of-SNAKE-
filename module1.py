@@ -1,6 +1,7 @@
 from ast import Global
+from hmac import new
 from tkinter import CENTER, image_names
-from turtle import Screen
+from turtle import Screen, delay
 import pygame
 import math
 import random
@@ -8,16 +9,19 @@ import ctypes
 ctypes.windll.user32.SetProcessDPIAware()
 from pygame.sprite import Group, Sprite
 import time
-import buttons
 from pygame import mixer, mixer_music
+import Buttons
+import Walls
+import Food
+import Snakes
 
 
 pygame.init()
 mixer.init()
 
-
 resolutiaEcranului = pygame.display.Info()
 screen = pygame.display.set_mode((resolutiaEcranului.current_w, resolutiaEcranului.current_h))
+
 walls_screen = pygame.display.set_mode((1920,1080))
 
 BG = pygame.image.load('grafici/BACKGROUND.png')
@@ -46,22 +50,8 @@ yummy_sound = pygame.mixer.Sound('Sound/yummy.mp3')
 yak_sound = pygame.mixer.Sound('Sound/yak.mp3')
 button_sound = pygame.mixer.Sound('Sound/button_pressed.mp3')
 
-
-snake1IMG = pygame.image.load('grafici/snake1.png')
-snake1IMG_rescale = pygame.transform.scale(snake1IMG, (120, 120))
-snk1 = pygame.transform.rotate(snake1IMG, 0)
 score1 = 0
-
-snake2IMG = pygame.image.load('grafici/snake2.png')
-snake2IMG_rescale = pygame.transform.scale(snake2IMG, (120, 120))
-snk2 = pygame.transform.rotate(snake2IMG, 0)
 score2 = 0
-
-hamburgerIMG = pygame.image.load('grafici/hamburger.png')
-
-brocoliIMG = pygame.image.load('grafici/broccoli.png')
-
-wallIMG = pygame.image.load('grafici/wall.png')
 
 startIMG = pygame.image.load('grafici/start.png').convert_alpha()
 exitIMG = pygame.image.load('grafici/exit.png').convert_alpha()
@@ -94,106 +84,18 @@ map4IMG = pygame.transform.scale(map4, (410, 180))
 
 game_font = pygame.font.Font('Font/PoetsenOne-Regular.ttf',30)
 
+snake1 = Snakes.snake1(random.randint(0,37),random.randint(1,19))
+
+snake2 = Snakes.snake2(random.randint(0,37),random.randint(1,19))
 
 
-class snake1:
-    
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y + 0.6
-        self.image = snk1
-        self.scaled_image = pygame.transform.scale(self.image,(gap_scale, gap_scale))
-        self.rect = self.scaled_image.get_rect(topleft=(self.x, self.y))
-         
-        self.miscare = 1
-        self.x1 = 0
-        self.y1 = 0
-    
-    def update(self):
-        self.rect.x = self.x * gap_scale
-        self.rect.y = self.y * gap_scale
-        screen.blit(self.scaled_image, self.rect)
-      
-    def move(self):
-        self.x += self.x1
-        self.y += self.y1     
-snake1 = snake1(random.randint(0,37),random.randint(1,19))
-
-class snake2:
-    
-    score2 = 0
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y + 0.6
-        self.image = snk2
-        self.scaled_image = pygame.transform.scale(self.image,(gap_scale, gap_scale))
-        self.rect = self.scaled_image.get_rect(topleft=(self.x, self.y))
-         
-        self.miscare = 1
-        self.x2 = 0
-        self.y2 = 0
-    
-    def update(self):
-        self.rect.x = self.x * gap_scale
-        self.rect.y = self.y * gap_scale
-        screen.blit(self.scaled_image, self.rect)
-        
-      
-    def move(self):
-        self.x += self.x2
-        self.y += self.y2 
-snake2 = snake2(random.randint(0,37),random.randint(1,19))
-
-class hamburger:
-    def __init__(self,x,y):
-        self.x=x
-        self.y=y 
-        self.image = hamburgerIMG
-        self.scaled_image = pygame.transform.scale(self.image,(gap_scale-10, gap_scale-10))
-        self.rect = self.scaled_image.get_rect(topleft=(self.x, self.y))
-    
-    def update(self):
-        self.rect.x = self.x * gap_scale+15
-        self.rect.y = self.y * gap_scale-5
-        screen.blit(self.scaled_image, self.rect)
-        
-    def move(self):
-        self.x = random.randint(0,37)
-        self.y = random.randint(1,20)
-hamburger = hamburger(0,0)   
+hamburger = Food.hamburger(0,0)   
 hamburger.move()
 
-class brocoli:
-    def __init__(self,x,y):
-        self.x=x
-        self.y=y 
-        self.image = brocoliIMG
-        self.scaled_image = pygame.transform.scale(self.image,(gap_scale-10, gap_scale-10))
-        self.rect = self.scaled_image.get_rect(topleft=(self.x, self.y))
-    
-    def update(self):
-        self.rect.x = self.x * gap_scale+15
-        self.rect.y = self.y * gap_scale-5
-        screen.blit(self.scaled_image, self.rect)
-        
-    def move(self):
-       self.x = random.randint(0,37)
-       self.y = random.randint(1,20)
-brocoli = brocoli(0,0)   
+
+brocoli = Food.brocoli(0,0)   
 brocoli.move()
 
-class walls(pygame.sprite.Sprite):
-    def __init__(self,x,y):
-        super().__init__()
-        
-        self.x = x+0.2
-        self.y = y+0.8
-        self.image = wallIMG
-        self.scaled_image= pygame.transform.scale(self.image,(gap_scale, gap_scale))
-        self.rect = self.scaled_image.get_rect()
-        
-        self.rect.x = self.x * gap_scale
-        self.rect.y = self.y * gap_scale
 
 def IsCollision1(xs1, ys1, xh, yh):
 
@@ -246,19 +148,19 @@ def draw_score1():
     score_text= str(score1)
     score_surface = game_font.render(score_text,True,(0,0,0))
     score_rect = score_surface.get_rect(center = (60,20))
-    hamburger_rect = hamburgerIMG.get_rect(midright = (score_rect.left-5,score_rect.centery))
+    hamburger_rect = Food.hamburgerIMG.get_rect(midright = (score_rect.left-5,score_rect.centery))
     
     screen.blit(score_surface,score_rect)
-    screen.blit(hamburgerIMG,hamburger_rect)
+    screen.blit(Food.hamburgerIMG,hamburger_rect)
     
 def draw_score2():
     score_text= str(score2)
     score_surface = game_font.render(score_text,True,(0,0,0))
     score_rect = score_surface.get_rect(center = (1900,20))
-    brocoli_rect = brocoliIMG.get_rect(midright = (score_rect.left-5,score_rect.centery))
+    brocoli_rect = Food.brocoliIMG.get_rect(midright = (score_rect.left-5,score_rect.centery))
     
     screen.blit(score_surface,score_rect)
-    screen.blit(brocoliIMG,brocoli_rect)
+    screen.blit(Food.brocoliIMG,brocoli_rect)
     
 def level_chose(level):
     world_data = []
@@ -287,7 +189,7 @@ def level_chose(level):
     for row, tiles in enumerate(world_data):
         for col, tile in enumerate(tiles):
             if tile == '1':
-                wall = walls(col, row)
+                wall = Walls.walls(col, row)
                 wall_group.add(wall)
             
 
@@ -299,12 +201,13 @@ def main_menu():
 
     while menu:
         screen.blit(bg_menu, (0,0))
-        screen.blit(snake1IMG_rescale,(830,180))
-        screen.blit(snake2IMG_rescale,(970,180))
-        start_button = buttons.Button(550,450,startIMG)
-        exit_button = buttons.Button(1100,450,exitIMG)
-        music_play = buttons.Button(165,95,music_playIMG)
-        maps_button = buttons.Button(850,600,mapsIMG)
+        screen.blit(Snakes.snake1IMG_rescale,(830,180))
+        screen.blit(Snakes.snake2IMG_rescale,(970,180))
+        start_button = Buttons.Button(550,450,startIMG)
+        exit_button = Buttons.Button(1100,450,exitIMG)
+        music_play = Buttons.Button(165,95,music_playIMG)
+        maps_button = Buttons.Button(850,600,mapsIMG)
+        
         
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -346,8 +249,8 @@ def main_menu():
             
         if maps_button.draw(screen):
             button_sound.play()
-            maps_menu()
             menu = False
+            maps_menu()
             
         pygame.display.update()
         
@@ -356,11 +259,11 @@ def maps_menu():
     while maps:
         screen.blit(bg_menu, (0,0))
         
-        return_button = buttons.Button(165,900,returnIMG)
-        map1 = buttons.Button(274,180,map1IMG)
-        map2 = buttons.Button(1235,180, map2IMG)
-        map3 = buttons.Button(274,720,map3IMG)
-        map4 = buttons.Button(1235,720, map4IMG)
+        return_button = Buttons.Button(165,900,returnIMG)
+        map1 = Buttons.Button(274,180,map1IMG)
+        map2 = Buttons.Button(1235,180, map2IMG)
+        map3 = Buttons.Button(274,720,map3IMG)
+        map4 = Buttons.Button(1235,720, map4IMG)
         
         screen.blit(map1IMG,(274,180))
         screen.blit(map2IMG,(1235,180))
@@ -415,10 +318,10 @@ def in_game_menu():
                 
         screen.blit(mini_menuIMG, (550,110))
         
-        menu_resume = buttons.Button(650,250,resumeIMG)
-        mainmenu = buttons.Button(650,500,mainmenuIMG)
-        menu_quit = buttons.Button(650,750,quitIMG)
-        music_play = buttons.Button(580,140,music_playIMG)
+        menu_resume = Buttons.Button(650,250,resumeIMG)
+        mainmenu = Buttons.Button(650,500,mainmenuIMG)
+        menu_quit = Buttons.Button(650,750,quitIMG)
+        music_play = Buttons.Button(580,140,music_playIMG)
         
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -461,8 +364,8 @@ def restart_menu():
     while rest_menu:
         screen.blit(restart_menuIMG, (550,250))
         
-        restart_button = buttons.Button(650,280,restartIMG)
-        mainmenu = buttons.Button(650,500,mainmenuIMG)
+        restart_button = Buttons.Button(650,280,restartIMG)
+        mainmenu = Buttons.Button(650,500,mainmenuIMG)
         
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -496,7 +399,7 @@ def game():
     print(level)
     while run:
         clock.tick(FPS)
-        menu_button = buttons.Button(900,-30,menuIMG)
+        menu_button = Buttons.Button(900,-30,menuIMG)
                 
         screen.blit(background,(0,0))
         
@@ -544,22 +447,22 @@ def game():
                     snake1.y1 = 0
                     global angle
                     angle = 270
-                    snake1.scaled_image = pygame.transform.rotate(snake1IMG, 270)
+                    snake1.scaled_image = pygame.transform.rotate(Snakes.snake1IMG, 270)
                 if event.key == pygame.K_d:
                     snake1.x1 = snake1.miscare
                     snake1.y1 = 0
                     angle = 90
-                    snake1.scaled_image = pygame.transform.rotate(snake1IMG, 90)
+                    snake1.scaled_image = pygame.transform.rotate(Snakes.snake1IMG, 90)
                 if event.key == pygame.K_w:
                     snake1.y1 = -snake1.miscare
                     snake1.x1 = 0
                     angle = 180
-                    snake1.scaled_image = pygame.transform.rotate(snake1IMG, 180)
+                    snake1.scaled_image = pygame.transform.rotate(Snakes.snake1IMG, 180)
                 if event.key == pygame.K_s:
                     snake1.y1 = snake1.miscare
                     snake1.x1 = 0
                     angle = 0
-                    snake1.scaled_image = pygame.transform.rotate(snake1IMG, 0)
+                    snake1.scaled_image = pygame.transform.rotate(Snakes.snake1IMG, 0)
        
                
             if event.type == pygame.KEYDOWN:
@@ -568,22 +471,22 @@ def game():
                     snake2.x2 = -snake2.miscare
                     snake2.y2 = 0
                     angle = 270
-                    snake2.scaled_image = pygame.transform.rotate(snake2IMG, 270)
+                    snake2.scaled_image = pygame.transform.rotate(Snakes.snake2IMG, 270)
                 if event.key == pygame.K_RIGHT:
                     snake2.x2 = snake2.miscare
                     snake2.y2 = 0
                     angle = 90
-                    snake2.scaled_image = pygame.transform.rotate(snake2IMG, 90)
+                    snake2.scaled_image = pygame.transform.rotate(Snakes.snake2IMG, 90)
                 if event.key == pygame.K_UP:
                     snake2.y2 = -snake2.miscare
                     snake2.x2 = 0
                     angle = 180
-                    snake2.scaled_image = pygame.transform.rotate(snake2IMG, 180)
+                    snake2.scaled_image = pygame.transform.rotate(Snakes.snake2IMG, 180)
                 if event.key == pygame.K_DOWN:
                     snake2.y2 = snake2.miscare
                     snake2.x2 = 0
                     angle = 0
-                    snake2.scaled_image = pygame.transform.rotate(snake2IMG, 0)
+                    snake2.scaled_image = pygame.transform.rotate(Snakes.snake2IMG, 0)
                 
 
         
