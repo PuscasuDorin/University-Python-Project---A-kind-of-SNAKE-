@@ -28,9 +28,10 @@ BG = pygame.image.load('grafici/BACKGROUND.png')
 background = pygame.transform.scale(BG, (resolutiaEcranului.current_w, resolutiaEcranului.current_h))
 bg = pygame.image.load('grafici/bg_menu.png')
 bg_menu = pygame.transform.scale(bg, (resolutiaEcranului.current_w, resolutiaEcranului.current_h))
-mixer.music.load('Sound/background_music.mp3')
-mixer.music.play(loops= -1)
 
+mixer.music.load('Sound/background_music.mp3')
+mixer.music.set_volume(0.3)
+mixer.music.play(loops= -1)
 
 pygame.display.set_caption("A kind of SNAKE")
 icon = pygame.image.load('grafici/icon.png')
@@ -47,7 +48,9 @@ angle = 0
 wall_group = pygame.sprite.Group()
 
 yummy_sound = pygame.mixer.Sound('Sound/yummy.mp3')
+yummy_sound.set_volume(1.0)  
 yak_sound = pygame.mixer.Sound('Sound/yak.mp3')
+yak_sound.set_volume(1.0)  
 button_sound = pygame.mixer.Sound('Sound/button_pressed.mp3')
 
 score1 = 0
